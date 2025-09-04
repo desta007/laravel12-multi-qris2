@@ -49,6 +49,7 @@ class MemberPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                \App\Http\Middleware\MemberRedirectMiddleware::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
