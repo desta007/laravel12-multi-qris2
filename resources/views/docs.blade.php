@@ -24,20 +24,93 @@
                         
                         <div class="bg-white p-6 rounded-lg shadow mb-6">
                             <h3 class="text-xl font-semibold mb-4">Authentication</h3>
-                            <p class="mb-4">All protected API requests require authentication using Sanctum tokens. Include the token in the Authorization header:</p>
+                            <p class="mb-4">All protected API requests require authentication using Sanctum tokens. First, you need to authenticate using the login endpoint to obtain a token, then include the token in the Authorization header:</p>
                             <pre class="bg-gray-100 p-4 rounded mb-4">Authorization: Bearer YOUR_API_TOKEN</pre>
-                            <p class="mb-2"><strong>To generate a token:</strong></p>
-                            <pre class="bg-gray-100 p-4 rounded mb-4">POST /api/tokens/create
+                            <p class="mb-2"><strong>To authenticate and get a token:</strong></p>
+                            <pre class="bg-gray-100 p-4 rounded mb-4">POST /api/auth/login
 Content-Type: application/json
 
 {
-    "name": "API Token",
-    "abilities": ["*"]
+    "email": "user@example.com",
+    "password": "your_password"
+}</pre>
+                            <p class="mb-2"><strong>Response:</strong></p>
+                            <pre class="bg-gray-100 p-4 rounded mb-4">{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "User Name",
+      "email": "user@example.com"
+    },
+    "token": "1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "token_type": "Bearer"
+  }
 }</pre>
                         </div>
                         
                         <div class="bg-white p-6 rounded-lg shadow mb-6">
                             <h3 class="text-xl font-semibold mb-4">API Endpoints</h3>
+                            
+                            <!-- Authentication Endpoints -->
+                            <div class="border-b border-gray-200 pb-4 mb-4">
+                                <h4 class="text-lg font-semibold mb-2 flex items-center">
+                                    <i class="fas fa-user-lock text-indigo-500 mr-2"></i> Authentication Endpoints
+                                </h4>
+                                
+                                <div class="ml-4 mt-3">
+                                    <h5 class="font-semibold mb-2">Login</h5>
+                                    <p class="mb-2"><strong>Endpoint:</strong> <code class="bg-gray-100 px-2 py-1 rounded">POST /api/auth/login</code></p>
+                                    <p class="mb-2"><strong>Description:</strong> Authenticate user and obtain access token</p>
+                                    <p class="mb-2"><strong>Authentication:</strong> Not required</p>
+                                    <p class="mb-2"><strong>Request Body:</strong></p>
+                                    <pre class="bg-gray-100 p-4 rounded text-sm">{
+  "email": "user@example.com",
+  "password": "your_password"
+}</pre>
+                                    <p class="mb-2"><strong>Response:</strong></p>
+                                    <pre class="bg-gray-100 p-4 rounded text-sm">{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "User Name",
+      "email": "user@example.com"
+    },
+    "token": "1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "token_type": "Bearer"
+  }
+}</pre>
+                                </div>
+                                
+                                <div class="ml-4 mt-4">
+                                    <h5 class="font-semibold mb-2">Get Authenticated User</h5>
+                                    <p class="mb-2"><strong>Endpoint:</strong> <code class="bg-gray-100 px-2 py-1 rounded">GET /api/auth/user</code></p>
+                                    <p class="mb-2"><strong>Description:</strong> Get the authenticated user's information</p>
+                                    <p class="mb-2"><strong>Authentication:</strong> Required</p>
+                                    <p class="mb-2"><strong>Response:</strong></p>
+                                    <pre class="bg-gray-100 p-4 rounded text-sm">{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "User Name",
+    "email": "user@example.com"
+  }
+}</pre>
+                                </div>
+                                
+                                <div class="ml-4 mt-4">
+                                    <h5 class="font-semibold mb-2">Logout</h5>
+                                    <p class="mb-2"><strong>Endpoint:</strong> <code class="bg-gray-100 px-2 py-1 rounded">POST /api/auth/logout</code></p>
+                                    <p class="mb-2"><strong>Description:</strong> Revoke the current access token</p>
+                                    <p class="mb-2"><strong>Authentication:</strong> Required</p>
+                                    <p class="mb-2"><strong>Response:</strong></p>
+                                    <pre class="bg-gray-100 p-4 rounded text-sm">{
+  "success": true,
+  "message": "Logged out successfully"
+}</pre>
+                                </div>
+                            </div>
                             
                             <!-- Test API Endpoint -->
                             <div class="border-b border-gray-200 pb-4 mb-4">
@@ -179,6 +252,35 @@ Content-Type: application/json
   "message": "Payment processed successfully"
 }</pre>
                             </div>
+                            
+                            <!-- Admin Endpoints -->
+                            <div class="border-b border-gray-200 pb-4 mb-4">
+                                <h4 class="text-lg font-semibold mb-2 flex items-center">
+                                    <i class="fas fa-user-shield text-orange-500 mr-2"></i> Admin Endpoints
+                                </h4>
+                                
+                                <div class="ml-4 mt-3">
+                                    <h5 class="font-semibold mb-2">Get Reports</h5>
+                                    <p class="mb-2"><strong>Endpoint:</strong> <code class="bg-gray-100 px-2 py-1 rounded">GET /api/admin/reports</code></p>
+                                    <p class="mb-2"><strong>Description:</strong> Get reports data (admin users only)</p>
+                                    <p class="mb-2"><strong>Authentication:</strong> Required (admin privileges)</p>
+                                    <p class="mb-2"><strong>Response:</strong></p>
+                                    <pre class="bg-gray-100 p-4 rounded text-sm">{
+  "message": "Reports page"
+}</pre>
+                                </div>
+                                
+                                <div class="ml-4 mt-4">
+                                    <h5 class="font-semibold mb-2">Export Reports</h5>
+                                    <p class="mb-2"><strong>Endpoint:</strong> <code class="bg-gray-100 px-2 py-1 rounded">GET /api/admin/reports/export</code></p>
+                                    <p class="mb-2"><strong>Description:</strong> Export reports data (admin users only)</p>
+                                    <p class="mb-2"><strong>Authentication:</strong> Required (admin privileges)</p>
+                                    <p class="mb-2"><strong>Response:</strong></p>
+                                    <pre class="bg-gray-100 p-4 rounded text-sm">{
+  "message": "Export reports"
+}</pre>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="bg-white p-6 rounded-lg shadow mb-6">
@@ -224,17 +326,32 @@ Content-Type: application/json
                             <ul class="list-disc pl-6 mb-2">
                                 <li><strong>400 Bad Request</strong> - Invalid request parameters</li>
                                 <li><strong>401 Unauthorized</strong> - Missing or invalid authentication token</li>
+                                <li><strong>403 Forbidden</strong> - Insufficient permissions (e.g., accessing admin endpoints without admin role)</li>
                                 <li><strong>404 Not Found</strong> - Resource not found (e.g., transaction ID)</li>
                                 <li><strong>500 Internal Server Error</strong> - Server-side errors</li>
                             </ul>
+                        </div>
+                        
+                        <div class="bg-white p-6 rounded-lg shadow mb-6">
+                            <h3 class="text-xl font-semibold mb-4">Rate Limiting</h3>
+                            <p class="mb-4">The API implements rate limiting to prevent abuse. Excessive requests may result in temporary blocks.</p>
                         </div>
                         
                         <div class="bg-white p-6 rounded-lg shadow">
                             <h3 class="text-xl font-semibold mb-4">Usage Examples</h3>
                             
                             <div class="mb-4">
-                                <h4 class="text-lg font-semibold mb-2">1. Generate a Payment QRIS</h4>
-                                <pre class="bg-gray-100 p-4 rounded text-sm">curl -X POST https://yourdomain.com/api/payment/generate-qris \
+                                <h4 class="text-lg font-semibold mb-2">1. Authenticate and Generate a Payment QRIS</h4>
+                                <pre class="bg-gray-100 p-4 rounded text-sm"># First, authenticate to get a token
+curl -X POST https://yourdomain.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "your_password"
+  }'
+
+# Use the token to generate a payment QRIS
+curl -X POST https://yourdomain.com/api/payment/generate-qris \
   -H "Authorization: Bearer YOUR_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
