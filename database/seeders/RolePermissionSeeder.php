@@ -35,6 +35,14 @@ class RolePermissionSeeder extends Seeder
             // Member permissions
             'view-members',
             'edit-members',
+            'create-members',
+            'delete-members',
+            
+            // Admin permissions
+            'view-admins',
+            'edit-admins',
+            'create-admins',
+            'delete-admins',
             
             // Report permissions
             'view-reports',

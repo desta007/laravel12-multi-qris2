@@ -25,6 +25,21 @@ class User extends Authenticatable implements FilamentUser
         return false;
     }
 
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('master_admin') || $this->hasRole('admin');
+    }
+
+    public function isMember(): bool
+    {
+        return $this->hasRole('member');
+    }
+
+    public function hasRoleName(string $roleName): bool
+    {
+        return $this->hasRole($roleName);
+    }
+
     /**
      * The attributes that are mass assignable.
      *

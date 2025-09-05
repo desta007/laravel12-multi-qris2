@@ -21,6 +21,9 @@ class MemberBalanceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-wallet';
 
+    // Hide from navigation
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function canViewAny(): bool
     {
         return Auth::user()->hasAnyRole(['master_admin', 'admin']);
