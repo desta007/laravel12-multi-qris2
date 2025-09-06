@@ -2,7 +2,8 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Filament\Admin\Resources\UserResource\Pages;
+use App\Filament\Admin\Resources\MemberResource\Pages;
+use App\Filament\Admin\Resources\MemberResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -13,52 +14,55 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
-class UserResource extends Resource
+class MemberResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     protected static ?string $navigationGroup = 'User Management';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationLabel = 'Member Users';
+    protected static ?string $pluralModelLabel = 'Member Users';
+    protected static ?string $modelLabel = 'Member User';
+
+    protected static ?int $navigationSort = 2;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Auth::user()->hasRole('master_admin');
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('User Information')
+                Forms\Components\Section::make('Member Information')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-                        
+
                         Forms\Components\TextInput::make('email')
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
-                        
+
                         Forms\Components\TextInput::make('password')
                             ->password()
                             ->required()
                             ->maxLength(255)
-                            ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                            ->visible(fn ($livewire) => $livewire instanceof Pages\CreateUser),
-                        
+                            ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                            ->visible(fn($livewire) => $livewire instanceof Pages\CreateMember),
+
                         Forms\Components\TextInput::make('new_password')
                             ->password()
                             ->maxLength(255)
-                            ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                            ->visible(fn ($livewire) => $livewire instanceof Pages\EditUser)
+                            ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                            ->visible(fn($livewire) => $livewire instanceof Pages\EditMember)
                             ->dehydrated(false)
                             ->label('New Password'),
-                        
-                        Forms\Components\Select::make('roles')
-                            ->label('Role')
-                            ->options(\Spatie\Permission\Models\Role::all()->pluck('name', 'id'))
-                            ->required()
-                            ->preload(),
                     ])
                     ->columns(2),
             ]);
@@ -67,58 +71,50 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($query) => $query->with('roles'))
+            ->modifyQueryUsing(fn($query) => $query->whereHas('roles', function ($query) {
+                $query->where('name', 'member');
+            })->with('roles'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
-                
-                Tables\Columns\TextColumn::make('roles.name')
-                    ->badge()
-                    ->searchable()
-                    ->sortable()
-                    ->default('No Role')
-                    ->formatStateUsing(fn ($state, $record) => $record->roles->first()?->name ?? 'No Role'),
-                
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('roles')
-                    ->relationship('roles', 'name')
-                    ->options(\Spatie\Permission\Models\Role::all()->pluck('name', 'name'))
-                    ->preload(),
+                //
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // No bulk actions for member users
             ]);
     }
 
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\MemberBalanceRelationManager::class,
+            RelationManagers\TransactionsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            'index' => Pages\ListMembers::route('/'),
+            'create' => Pages\CreateMember::route('/create'),
+            'view' => Pages\ViewMember::route('/{record}'),
+            'edit' => Pages\EditMember::route('/{record}/edit'),
         ];
     }
 
@@ -143,7 +139,7 @@ class UserResource extends Resource
         if (Auth::id() === $record->id) {
             return false;
         }
-        
+
         return Auth::user()->hasRole('master_admin');
     }
 }

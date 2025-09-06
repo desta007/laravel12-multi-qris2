@@ -40,6 +40,16 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasRole($roleName);
     }
 
+    public function transactions()
+    {
+        return $this->hasMany(\App\Models\Transaction::class);
+    }
+
+    public function memberBalance()
+    {
+        return $this->hasOne(\App\Models\MemberBalance::class);
+    }
+
     /**
      * The attributes that are mass assignable.
      *
