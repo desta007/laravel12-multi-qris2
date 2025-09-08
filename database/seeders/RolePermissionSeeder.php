@@ -72,6 +72,11 @@ class RolePermissionSeeder extends Seeder
             'view-member-balances',
             'edit-member-balances',
             'view-members',
+            'create-members',
+            'edit-members',
+            'view-admins',
+            'create-admins',
+            'edit-admins',
             'view-reports',
             'export-reports',
         ];

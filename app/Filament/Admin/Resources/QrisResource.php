@@ -21,6 +21,12 @@ class QrisResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-qr-code';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        // Menyembunyikan menu QRIS untuk role 'admin', hanya tampilkan untuk 'master_admin'
+        return Auth::user()->hasRole('master_admin');
+    }
+
     public static function canViewAny(): bool
     {
         return Auth::user()->hasAnyRole(['master_admin', 'admin']);

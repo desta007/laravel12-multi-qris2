@@ -29,7 +29,8 @@ class AdminResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return Auth::user()->hasRole('master_admin');
+        // Menampilkan menu User Management untuk role 'admin' dan 'master_admin'
+        return Auth::user()->hasAnyRole(['master_admin', 'admin']);
     }
 
     public static function form(Form $form): Form
@@ -151,12 +152,14 @@ class AdminResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Auth::user()->hasRole('master_admin');
+        // Mengizinkan role 'admin' dan 'master_admin' untuk melihat Admin Users
+        return Auth::user()->hasAnyRole(['master_admin', 'admin']);
     }
 
     public static function canCreate(): bool
     {
-        return Auth::user()->hasRole('master_admin');
+        // Mengizinkan role 'admin' dan 'master_admin' untuk membuat Admin Users
+        return Auth::user()->hasAnyRole(['master_admin', 'admin']);
     }
 
     public static function canEdit($record): bool
