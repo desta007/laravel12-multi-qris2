@@ -18,6 +18,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Member\Pages\MemberLogin;
+use App\Filament\Member\Pages\EditProfile;
+use App\Filament\Member\Pages\MemberProfile;
 
 class MemberPanelProvider extends PanelProvider
 {
@@ -33,6 +35,7 @@ class MemberPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Member/Pages'), for: 'App\\Filament\\Member\\Pages')
             ->pages([
                 Pages\Dashboard::class,
+                MemberProfile::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Member/Widgets'), for: 'App\\Filament\\Member\\Widgets')
             ->widgets([
@@ -58,14 +61,11 @@ class MemberPanelProvider extends PanelProvider
             ->login(MemberLogin::class)
             ->passwordReset()
             ->emailVerification()
-            ->profile()
+            ->profile(EditProfile::class)
             ->navigationGroups([
                 'Dashboard',
                 'Transactions',
                 'Account',
-            ])
-            ->navigationItems([
-                // We'll add custom navigation items here
             ])
             ->spa()
             // Removed databaseNotifications() to avoid the notifications table issue

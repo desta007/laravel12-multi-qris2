@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Models\MemberBalance;
 use App\Models\Qris;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class Dashboard extends Page
 {
@@ -38,8 +39,44 @@ class Dashboard extends Page
             ->get();
     }
 
-    public function getActiveQrisProperty()
+    public function getStaticQrisProperty()
     {
-        return Qris::where('is_active', true)->get();
+        $user = Auth::user();
+        $activeQris = Qris::where('is_active', true)->where('type', 'static')->get();
+        return $this->getRollingQris($activeQris);
+    }
+
+    public function getDynamicQrisProperty()
+    {
+        $user = Auth::user();
+        $activeQris = Qris::where('is_active', true)->where('type', 'dynamic')->get();
+        return $this->getRollingQris($activeQris);
+    }
+    
+    /**
+     * Get a QRIS for rolling display based on cache
+     */
+    private function getRollingQris($qrisCollection)
+    {
+        if ($qrisCollection->isEmpty()) {
+            return null;
+        }
+        
+        // If only one QRIS, return it
+        if ($qrisCollection->count() == 1) {
+            return $qrisCollection->first();
+        }
+        
+        // Use cache to implement rolling display
+        $cacheKey = 'member_qris_rolling_' . Auth::id() . '_' . ($qrisCollection->first()->type ?? 'unknown');
+        $lastIndex = Cache::get($cacheKey, -1);
+        
+        // Get next index
+        $nextIndex = ($lastIndex + 1) % $qrisCollection->count();
+        
+        // Store the index for next time
+        Cache::put($cacheKey, $nextIndex, now()->addMinutes(10));
+        
+        return $qrisCollection->values()->get($nextIndex);
     }
 }
