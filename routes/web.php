@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\QrisController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -22,3 +23,6 @@ Route::middleware('auth')->group(function () {
         return redirect('/');
     })->name('logout');
 });
+
+Route::get('/qris', [QrisController::class, 'showForm'])->name('qris.form');
+Route::post('/qris/generate', [QrisController::class, 'generate'])->name('qris.generate');
