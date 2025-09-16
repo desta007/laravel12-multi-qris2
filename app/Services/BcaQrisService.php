@@ -69,29 +69,41 @@ class BcaQrisService
     {
         try {
             $accessToken = $this->getAccessToken();
-            $timestamp = Carbon::now('UTC')->toIso8601String() . 'Z';
+            // $timestamp = Carbon::now('UTC')->toIso8601String() . 'Z';
+            $timestamp = now('UTC')->format('Y-m-d\TH:i:s.v\Z');
             $relativeUrl = '/openapi/v1.0/qr/qr-mpm-generate';
             $url = $this->baseUrl . $relativeUrl;
 
+            // $payload = [
+            //     'merchantId' => '0000000000001', // Ganti dengan Merchant ID Anda
+            //     'terminalId' => '00000011',     // Ganti dengan Terminal ID Anda
+            //     'merchantName' => 'NAMA TOKO ANDA',
+            //     'amount' => number_format($amount, 2, '.', ''),
+            //     'qrType' => 'MPM',
+            //     'transactionId' => $transactionId,
+            //     'currency' => 'IDR',
+            //     'expiredDate' => '1D', // Berlaku 1 hari
+            // ];
+
             $payload = [
-                'merchantId' => '0000000000001', // Ganti dengan Merchant ID Anda
-                'terminalId' => '00000011',     // Ganti dengan Terminal ID Anda
-                'merchantName' => 'NAMA TOKO ANDA',
+                'qrType' => 'DYNAMIC',
                 'amount' => number_format($amount, 2, '.', ''),
-                'qrType' => 'MPM',
-                'transactionId' => $transactionId,
-                'currency' => 'IDR',
-                'expiredDate' => '1D', // Berlaku 1 hari
+                'merchantId' => config('bca.merchant_id'),
+                'partnerReferenceNo' => $transactionId,
             ];
 
             $requestBody = json_encode($payload);
 
-            $signature = $this->generateSignature('POST', $relativeUrl, $accessToken, $requestBody, $timestamp);
+            $hashedBody = strtolower(hash('sha256', $requestBody));
+            $stringToSign = "POST:{$relativeUrl}:{$accessToken}:{$hashedBody}:{$timestamp}:{$this->apiKey}";
+
+            // $signature = $this->generateSignature('POST', $relativeUrl, $accessToken, $requestBody, $timestamp);
+            $signature = hash_hmac('sha512', $stringToSign, $this->apiSecret);
 
             $headers = [
                 'Authorization' => 'Bearer ' . $accessToken,
                 'Content-Type' => 'application/json',
-                'Origin' => $this->origin,
+                // 'Origin' => $this->origin,
                 'X-BCA-Key' => $this->apiKey,
                 'X-BCA-Timestamp' => $timestamp,
                 'X-BCA-Signature' => $signature,
