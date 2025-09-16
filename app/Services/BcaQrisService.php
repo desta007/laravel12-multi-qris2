@@ -33,7 +33,7 @@ class BcaQrisService
     private function getAccessToken(): string
     {
         return Cache::remember('bca_access_token', 3500, function () {
-            $url = $this->baseUrl . '/openapi/v1.0/oauth/token';
+            $url = $this->baseUrl . '/api/oauth/token';
 
             $response = Http::asForm()->withHeaders([
                 'Authorization' => 'Basic ' . base64_encode($this->clientId . ':' . $this->clientSecret),
