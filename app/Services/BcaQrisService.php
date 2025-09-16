@@ -14,21 +14,22 @@ class BcaQrisService
     protected $clientSecret;
     protected $apiKey;
     protected $apiSecret;
-    protected $origin;
+    protected $partnerId;
+    protected $channelId;
 
     public function __construct()
     {
-        $this->baseUrl = config('bca.base_url');
-        $this->clientId = config('bca.client_id');
+        $this->baseUrl     = config('bca.base_url');        // https://sandbox.bca.co.id
+        $this->clientId    = config('bca.client_id');
         $this->clientSecret = config('bca.client_secret');
-        $this->apiKey = config('bca.api_key');
-        $this->apiSecret = config('bca.api_secret');
-        $this->origin = config('bca.origin');
+        $this->apiKey      = config('bca.api_key');
+        $this->apiSecret   = config('bca.api_secret');
+        // $this->partnerId   = config('bca.partner_id');      // X-PARTNER-ID
+        // $this->channelId   = config('bca.channel_id');      // CHANNEL-ID
     }
 
     /**
-     * Mendapatkan Access Token dari BCA.
-     * Token akan di-cache untuk efisiensi.
+     * Mendapatkan Access Token
      */
     private function getAccessToken(): string
     {
@@ -41,92 +42,92 @@ class BcaQrisService
                 'grant_type' => 'client_credentials',
             ]);
 
-            $response->throw(); // Lemparkan exception jika request gagal
+            $response->throw();
 
             return $response->json('access_token');
         });
     }
 
     /**
-     * Membuat signature sesuai dengan ketentuan BCA.
+     * Membuat Signature sesuai ketentuan BCA QRIS
      */
-    private function generateSignature(string $httpMethod, string $relativeUrl, string $accessToken, string $requestBody, string $timestamp): string
+    private function generateSignature(string $accessToken, string $timestamp, string $externalId, string $body): string
     {
-        $hashedBody = strtolower(hash('sha256', $requestBody));
-        $stringToSign = "{$httpMethod}:{$relativeUrl}:{$accessToken}:{$hashedBody}:{$timestamp}";
+        // BCA format: <HTTP_METHOD>:<ENDPOINT_PATH>:<ACCESS_TOKEN>:<BODY_HASH>:<TIMESTAMP>:<EXTERNAL_ID>
+        $relativeUrl = '/openapi/v1.0/qr/qr-mpm-generate';
+        $hashedBody  = hash('sha256', $body);
 
-        return hash_hmac('sha512', $stringToSign, $this->apiSecret);
+        $stringToSign = "POST:$relativeUrl:$accessToken:$hashedBody:$timestamp:$externalId";
+
+        return base64_encode(
+            hash_hmac('sha512', $stringToSign, $this->apiSecret, true)
+        );
     }
 
     /**
-     * Generate QRIS MPM (Merchant Presented Mode).
-     *
-     * @param float $amount
-     * @param string $transactionId
-     * @return array
+     * Generate QRIS
      */
     public function generateQris(float $amount, string $transactionId): array
     {
         try {
             $accessToken = $this->getAccessToken();
-            // $timestamp = Carbon::now('UTC')->toIso8601String() . 'Z';
-            $timestamp = now('UTC')->format('Y-m-d\TH:i:s.v\Z');
-            $relativeUrl = '/openapi/v1.0/qr/qr-mpm-generate';
-            $url = $this->baseUrl . $relativeUrl;
 
-            // $payload = [
-            //     'merchantId' => '0000000000001', // Ganti dengan Merchant ID Anda
-            //     'terminalId' => '00000011',     // Ganti dengan Terminal ID Anda
-            //     'merchantName' => 'NAMA TOKO ANDA',
-            //     'amount' => number_format($amount, 2, '.', ''),
-            //     'qrType' => 'MPM',
-            //     'transactionId' => $transactionId,
-            //     'currency' => 'IDR',
-            //     'expiredDate' => '1D', // Berlaku 1 hari
-            // ];
+            // timestamp harus format "2025-09-16T14:05:08+07:00"
+            $timestamp   = Carbon::now('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
+
+            $externalId  = (string) Str::uuid();
 
             $payload = [
-                'qrType' => 'DYNAMIC',
-                'amount' => number_format($amount, 2, '.', ''),
-                'merchantId' => config('bca.merchant_id'),
-                'partnerReferenceNo' => $transactionId,
+                "partnerReferenceNo" => $transactionId,
+                "amount" => [
+                    "value"    => number_format($amount, 2, '.', ''),
+                    "currency" => "IDR"
+                ],
+                "merchantId"     => '123456789', //config('bca.merchant_id'),
+                "subMerchantId"  => "",
+                "terminalId"     => 'A1234567', //config('bca.terminal_id'),
+                "validityPeriod" => Carbon::now('Asia/Jakarta')->addMinutes(5)->format('Y-m-d\TH:i:sP'),
+                "additionalInfo" => [
+                    "convenienceFee"      => "0.00",
+                    "partnerMerchantType" => "",
+                    "terminalLocationName" => "",
+                    "qrOption"            => "C"
+                ]
             ];
 
-            $requestBody = json_encode($payload);
+            $body = json_encode($payload, JSON_UNESCAPED_SLASHES);
 
-            $hashedBody = strtolower(hash('sha256', $requestBody));
-            $stringToSign = "POST:{$relativeUrl}:{$accessToken}:{$hashedBody}:{$timestamp}:{$this->apiKey}";
-
-            // $signature = $this->generateSignature('POST', $relativeUrl, $accessToken, $requestBody, $timestamp);
-            $signature = hash_hmac('sha512', $stringToSign, $this->apiSecret);
+            $signature = $this->generateSignature($accessToken, $timestamp, $externalId, $body);
 
             $headers = [
                 'Authorization' => 'Bearer ' . $accessToken,
-                'Content-Type' => 'application/json',
-                // 'Origin' => $this->origin,
-                'X-BCA-Key' => $this->apiKey,
-                'X-BCA-Timestamp' => $timestamp,
-                'X-BCA-Signature' => $signature,
+                'Content-Type'  => 'application/json',
+                'CHANNEL-ID'    => '95251', //$this->channelId,
+                'X-PARTNER-ID'  => '123456789',
+                'X-EXTERNAL-ID' => '41807553358950093184162180797837',
+                'X-TIMESTAMP'   => $timestamp,
+                'X-SIGNATURE'   => $signature,
             ];
 
-            $response = Http::withHeaders($headers)->withBody($requestBody, 'application/json')->post($url);
+            $url = $this->baseUrl . '/openapi/v1.0/qr/qr-mpm-generate';
+
+            $response = Http::withHeaders($headers)->post($url, $payload);
 
             if ($response->successful()) {
                 return [
                     'success' => true,
-                    'data' => $response->json(),
+                    'data'    => $response->json(),
                 ];
             }
 
-            // Gagal, kembalikan response error dari BCA
             return [
                 'success' => false,
-                'error' => $response->json() ?? ['message' => $response->body()],
+                'error'   => $response->json() ?? ['message' => $response->body()],
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => ['message' => $e->getMessage()],
+                'error'   => ['message' => $e->getMessage()],
             ];
         }
     }
