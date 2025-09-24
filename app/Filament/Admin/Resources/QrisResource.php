@@ -112,6 +112,16 @@ class QrisResource extends Resource
                     ->boolean(),
                 Tables\Columns\TextColumn::make('fee_percentage')
                     ->suffix('%'),
+                Tables\Columns\TextColumn::make('qr_code_image_data_url')
+                    ->label('QR Code')
+                    ->formatStateUsing(
+                        fn($state) => $state
+                            ? '<div class="flex justify-center items-center">
+                <img src="' . e($state) . '" alt="QR Code" style="width: 60px; height: 60px; object-fit: contain;" />
+           </div>'
+                            : '<span class="text-xs text-gray-500">No QRIS code</span>'
+                    )
+                    ->html(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -128,13 +138,13 @@ class QrisResource extends Resource
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions(
-                Auth::user()->hasRole('master_admin') 
-                ? [
-                    Tables\Actions\BulkActionGroup::make([
-                        Tables\Actions\DeleteBulkAction::make(),
-                    ]),
-                ]
-                : []
+                Auth::user()->hasRole('master_admin')
+                    ? [
+                        Tables\Actions\BulkActionGroup::make([
+                            Tables\Actions\DeleteBulkAction::make(),
+                        ]),
+                    ]
+                    : []
             );
     }
 

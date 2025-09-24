@@ -54,6 +54,31 @@ class Dashboard extends Page
     }
     
     /**
+     * Generate QR code image from QRIS code
+     */
+    public function generateQrCodeImage($qris)
+    {
+        if (empty($qris?->qris_code)) {
+            return null;
+        }
+
+        try {
+            // Use SVG format which doesn't require Imagick
+            $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+                ->size(200)
+                ->margin(2)
+                ->generate($qris->qris_code);
+
+            // Return as base64 encoded SVG data URL
+            $encoded = base64_encode($qrCode);
+            return 'data:image/svg+xml;base64,' . $encoded;
+        } catch (\Exception $e) {
+            \Log::error('QR Code generation failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Get a QRIS for rolling display based on cache
      */
     private function getRollingQris($qrisCollection)

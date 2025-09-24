@@ -27,6 +27,16 @@ class QrisSeeder extends Seeder
                 'fee_percentage' => 0.7,
             ],
             [
+                'name' => 'BCA Dynamic QRIS',
+                'bank_id' => Bank::where('name', 'BCA')->first()->id,
+                'qris_code' => 'DUMMY_QRIS_CODE_BCA_DYNAMIC_001',
+                'type' => 'dynamic',
+                'is_active' => true,
+                'fee_percentage' => 0.7,
+                'bca_merchant_id' => 'MIDBCA001',
+                'bca_terminal_id' => 'TIDBCA001',
+            ],
+            [
                 'name' => 'Mandiri Dynamic QRIS',
                 'bank_id' => Bank::where('name', 'Mandiri')->first()->id,
                 'qris_code' => 'DUMMY_QRIS_CODE_MANDIRI_DYNAMIC_001',

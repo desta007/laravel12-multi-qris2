@@ -26,9 +26,20 @@
                 <div class="border rounded-lg p-4 dark:border-gray-700">
                     <h4 class="font-medium text-lg text-gray-900 dark:text-white mb-3">Static QRIS</h4>
                     @if($this->staticQris)
-                        @if($this->staticQris->qris_image)
+                        @php
+                            $qrCodeImage = $this->generateQrCodeImage($this->staticQris);
+                        @endphp
+                        @if($qrCodeImage)
+                            <div class="flex justify-center mb-2">
+                                <img src="{{ $qrCodeImage }}" alt="{{ $this->staticQris->name }}" class="w-32 h-32 object-contain">
+                            </div>
+                        @elseif($this->staticQris->qris_image)
                             <div class="flex justify-center mb-2">
                                 <img src="{{ asset('storage/' . $this->staticQris->qris_image) }}" alt="{{ $this->staticQris->name }}" class="w-32 h-32 object-contain">
+                            </div>
+                        @else
+                            <div class="flex justify-center mb-2 text-gray-400">
+                                <span>No QR Code</span>
                             </div>
                         @endif
                         <div class="flex items-center mb-2">
@@ -48,9 +59,20 @@
                 <div class="border rounded-lg p-4 dark:border-gray-700">
                     <h4 class="font-medium text-lg text-gray-900 dark:text-white mb-3">Dynamic QRIS</h4>
                     @if($this->dynamicQris)
-                        @if($this->dynamicQris->qris_image)
+                        @php
+                            $qrCodeImage = $this->generateQrCodeImage($this->dynamicQris);
+                        @endphp
+                        @if($qrCodeImage)
+                            <div class="flex justify-center mb-2">
+                                <img src="{{ $qrCodeImage }}" alt="{{ $this->dynamicQris->name }}" class="w-32 h-32 object-contain">
+                            </div>
+                        @elseif($this->dynamicQris->qris_image)
                             <div class="flex justify-center mb-2">
                                 <img src="{{ asset('storage/' . $this->dynamicQris->qris_image) }}" alt="{{ $this->dynamicQris->name }}" class="w-32 h-32 object-contain">
+                            </div>
+                        @else
+                            <div class="flex justify-center mb-2 text-gray-400">
+                                <span>No QR Code</span>
                             </div>
                         @endif
                         <div class="flex items-center mb-2">

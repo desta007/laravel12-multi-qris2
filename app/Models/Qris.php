@@ -17,7 +17,10 @@ class Qris extends Model
         'qris_image',
         'type',
         'is_active',
-        'fee_percentage'
+        'fee_percentage',
+        'bca_merchant_id',
+        'bca_terminal_id',
+        'bca_additional_info'
     ];
 
     protected $casts = [
@@ -33,5 +36,37 @@ class Qris extends Model
     public function bank()
     {
         return $this->belongsTo(Bank::class);
+    }
+
+    /**
+     * Generate QR code image from the QRIS code
+     */
+    public function generateQrCodeImage()
+    {
+        if (empty($this->qris_code)) {
+            return null;
+        }
+
+        try {
+            // Hasil generate sudah berupa string SVG
+            $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+                ->size(200)
+                ->margin(2)
+                ->generate($this->qris_code);
+
+            // langsung jadikan data URI
+            return 'data:image/svg+xml;base64,' . base64_encode($qrCode);
+        } catch (\Exception $e) {
+            \Log::error('QR Code generation failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Accessor for QR code image data URL
+     */
+    public function getQrCodeImageDataUrlAttribute()
+    {
+        return $this->generateQrCodeImage();
     }
 }
